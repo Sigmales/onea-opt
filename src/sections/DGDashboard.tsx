@@ -26,6 +26,7 @@ import {
   Cell,
   Line
 } from 'recharts';
+import { exportDGReport } from '../../lib/pdf-export';
 
 // Mission TDR Coverage:
 // Mission 1: Analyse données énergétiques nationales
@@ -61,7 +62,7 @@ const monthlySavings = [
 ];
 
 const strategicInitiatives = [
-  { 
+  {
     id: '1',
     name: 'Extension IA 5 stations supplémentaires',
     budget: 15000000,
@@ -70,7 +71,7 @@ const strategicInitiatives = [
     impact: '+45M FCFA/an',
     status: 'approved'
   },
-  { 
+  {
     id: '2',
     name: 'Formation techniciens avancée',
     budget: 2000000,
@@ -79,7 +80,7 @@ const strategicInitiatives = [
     impact: '+15% adoption',
     status: 'pending'
   },
-  { 
+  {
     id: '3',
     name: 'Détection anomalies temps réel',
     budget: 8000000,
@@ -88,7 +89,7 @@ const strategicInitiatives = [
     impact: '-30% fuites',
     status: 'review'
   },
-  { 
+  {
     id: '4',
     name: 'Optimisation Cos φ national',
     budget: 5000000,
@@ -97,7 +98,7 @@ const strategicInitiatives = [
     impact: '-12M FCFA pénalités',
     status: 'pending'
   },
-  { 
+  {
     id: '5',
     name: 'Tableau de bord exécutif mobile',
     budget: 1500000,
@@ -125,7 +126,7 @@ export function DGDashboard() {
   // Calculated metrics for display (used in UI)
   const totalSavingsDisplay = nationalStations.reduce((acc, s) => acc + Math.max(0, s.savings), 0);
   const optimizedStationsCount = nationalStations.filter(s => s.status === 'optimized').length;
-  
+
   // Use the variables to avoid TypeScript errors
   console.log(`Total savings: ${totalSavingsDisplay}, Optimized: ${optimizedStationsCount}/${nationalStations.length}`);
 
@@ -145,6 +146,23 @@ export function DGDashboard() {
       case 'action': return 'Action requise';
       default: return 'Inconnu';
     }
+  };
+
+  const handleExportPDF = async () => {
+    const totalSavings = nationalStations.reduce((acc, s) => acc + Math.max(0, s.savings), 0);
+
+    await exportDGReport({
+      stations: nationalStations,
+      monthlySavings,
+      initiatives: strategicInitiatives,
+      budget: budgetFlow,
+      metrics: {
+        annualSavings: totalSavings,
+        roi: '1.5 mois',
+        co2Saved: 1704,
+        adoptionRate: 78
+      }
+    });
   };
 
   return (
@@ -168,7 +186,7 @@ export function DGDashboard() {
               <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700">
                 <Printer className="w-4 h-4 mr-2" /> Imprimer
               </Button>
-              <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700">
+              <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700" onClick={handleExportPDF}>
                 <Download className="w-4 h-4 mr-2" /> PDF
               </Button>
             </div>
@@ -254,7 +272,7 @@ export function DGDashboard() {
                 stroke="#94A3B8"
                 strokeWidth="2"
               />
-              
+
               {/* Station markers */}
               {nationalStations.map((station) => {
                 // Approximate positions for demo
@@ -271,10 +289,10 @@ export function DGDashboard() {
                   banfora: { x: 80, y: 200 },
                 };
                 const pos = positions[station.id] || { x: 200, y: 150 };
-                
+
                 return (
-                  <g 
-                    key={station.id} 
+                  <g
+                    key={station.id}
                     className="cursor-pointer hover:scale-110 transition-transform"
                     onClick={() => setSelectedStation(selectedStation === station.id ? null : station.id)}
                   >
@@ -298,7 +316,7 @@ export function DGDashboard() {
                 );
               })}
             </svg>
-            
+
             {/* Legend */}
             <div className="absolute bottom-4 left-4 bg-white/90 p-3 rounded-lg shadow-sm">
               <p className="text-xs font-medium text-gray-700 mb-2">Légende</p>
@@ -328,7 +346,7 @@ export function DGDashboard() {
                     <>
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-bold text-[#1E293B]">{station.name}</h3>
-                        <button 
+                        <button
                           onClick={() => setSelectedStation(null)}
                           className="text-gray-400 hover:text-gray-600"
                         >
@@ -336,9 +354,9 @@ export function DGDashboard() {
                         </button>
                       </div>
                       <p className="text-sm text-gray-500 mb-3">{station.region}</p>
-                      <Badge 
+                      <Badge
                         className="mb-3"
-                        style={{ 
+                        style={{
                           backgroundColor: getStatusColor(station.status) + '20',
                           color: getStatusColor(station.status)
                         }}
@@ -364,28 +382,28 @@ export function DGDashboard() {
               <AreaChart data={monthlySavings}>
                 <defs>
                   <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#20AF24" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#20AF24" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#20AF24" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#20AF24" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(v) => `${(v/1000000).toFixed(1)}M`} />
+                <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
                 <Tooltip formatter={(v: number) => `${v.toLocaleString()} FCFA`} />
-                <Area 
-                  type="monotone" 
-                  dataKey="cumulative" 
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
                   name="Économies cumulées"
-                  stroke="#20AF24" 
-                  fillOpacity={1} 
-                  fill="url(#colorSavings)" 
+                  stroke="#20AF24"
+                  fillOpacity={1}
+                  fill="url(#colorSavings)"
                   strokeWidth={2}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="savings" 
+                <Line
+                  type="monotone"
+                  dataKey="savings"
                   name="Économies mensuelles"
-                  stroke="#0066CC" 
+                  stroke="#0066CC"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -424,7 +442,7 @@ export function DGDashboard() {
                   <p className="text-2xl font-bold text-[#20AF24]">{(budgetFlow.optimized / 1000000).toFixed(0)}M FCFA</p>
                 </div>
               </div>
-              
+
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <p className="text-sm text-green-700">
                   <strong>{(budgetFlow.freed / 1000000).toFixed(0)}M FCFA libérés</strong> pour réinvestissement
@@ -436,8 +454,8 @@ export function DGDashboard() {
                 {budgetFlow.reallocation.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full" 
+                      <div
+                        className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: item.color }}
                       />
                       <span className="text-sm">{item.name}</span>
@@ -450,15 +468,15 @@ export function DGDashboard() {
 
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={budgetFlow.reallocation} 
+                <BarChart
+                  data={budgetFlow.reallocation}
                   layout="vertical"
                   margin={{ left: 120 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" tickFormatter={(v) => `${v/1000000}M`} />
+                  <XAxis type="number" tickFormatter={(v) => `${v / 1000000}M`} />
                   <YAxis dataKey="name" type="category" width={110} />
-                  <Tooltip formatter={(v: number) => `${(v/1000000).toFixed(0)}M FCFA`} />
+                  <Tooltip formatter={(v: number) => `${(v / 1000000).toFixed(0)}M FCFA`} />
                   <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
                     {budgetFlow.reallocation.map((item, index) => (
                       <Cell key={`cell-${index}`} fill={item.color} />
@@ -499,8 +517,8 @@ export function DGDashboard() {
                     <td className="px-4 py-3">
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }, (_, i) => (
-                          <Star 
-                            key={i} 
+                          <Star
+                            key={i}
                             className={`w-4 h-4 ${i < initiative.priority ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`}
                           />
                         ))}
@@ -509,11 +527,11 @@ export function DGDashboard() {
                     <td className="px-4 py-3">
                       <Badge className={
                         initiative.status === 'approved' ? 'bg-green-100 text-green-700' :
-                        initiative.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-blue-100 text-blue-700'
+                          initiative.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-blue-100 text-blue-700'
                       }>
                         {initiative.status === 'approved' ? 'Approuvé' :
-                         initiative.status === 'pending' ? 'En attente' : 'En révision'}
+                          initiative.status === 'pending' ? 'En attente' : 'En révision'}
                       </Badge>
                     </td>
                   </tr>

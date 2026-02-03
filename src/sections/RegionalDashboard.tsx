@@ -27,6 +27,7 @@ import {
   ReferenceLine,
   Legend
 } from 'recharts';
+import { exportRegionalData } from '../../lib/excel-export';
 
 // Mission TDR Coverage:
 // Mission 5: Répartition charge inter-stations
@@ -137,7 +138,7 @@ export function RegionalDashboard() {
     if (!sortConfig || sortConfig.key !== key) {
       return <ChevronUp className="w-3 h-3 text-gray-300" />;
     }
-    return sortConfig.direction === 'asc' 
+    return sortConfig.direction === 'asc'
       ? <ChevronUp className="w-3 h-3 text-[#0066CC]" />
       : <ChevronDown className="w-3 h-3 text-[#0066CC]" />;
   };
@@ -156,6 +157,18 @@ export function RegionalDashboard() {
   const totalSavings = stations.reduce((acc, s) => acc + s.savings, 0);
   const optimalStations = stations.filter(s => s.status === 'optimal').length;
 
+  const handleExportExcel = () => {
+    exportRegionalData({
+      stations,
+      efficiencyRanking,
+      loadDistribution,
+      monthlyTrend,
+      totalSavings,
+      optimalStations,
+      totalStations: stations.length
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-6">
       {/* Header */}
@@ -171,7 +184,7 @@ export function RegionalDashboard() {
               <h1 className="text-2xl font-bold">Zone Ouagadougou</h1>
               <p className="text-sm text-blue-100">5 stations · 36,000 m³/h capacité totale</p>
             </div>
-            <Button variant="secondary" className="gap-2">
+            <Button variant="secondary" className="gap-2" onClick={handleExportExcel}>
               <Download className="w-4 h-4" /> Exporter Excel
             </Button>
           </div>
@@ -230,31 +243,31 @@ export function RegionalDashboard() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center gap-1">Station {getSortIcon('name')}</div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('capacity')}
                   >
                     <div className="flex items-center gap-1">Capacité {getSortIcon('capacity')}</div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('consumption')}
                   >
                     <div className="flex items-center gap-1">Consommation {getSortIcon('consumption')}</div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('costPerM3')}
                   >
                     <div className="flex items-center gap-1">Coût/m³ {getSortIcon('costPerM3')}</div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort('savings')}
                   >
@@ -275,34 +288,31 @@ export function RegionalDashboard() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{station.consumption.toLocaleString()} kWh</span>
-                        <Badge className={`text-xs ${
-                          station.consumptionTrend < 0 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
-                        }`}>
+                        <Badge className={`text-xs ${station.consumptionTrend < 0
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                          }`}>
                           {station.consumptionTrend < 0 ? '' : '+'}{station.consumptionTrend}%
                         </Badge>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-sm font-medium ${
-                        station.costPerM3 <= 45 ? 'text-green-600' :
+                      <span className={`text-sm font-medium ${station.costPerM3 <= 45 ? 'text-green-600' :
                         station.costPerM3 <= 52 ? 'text-yellow-600' : 'text-red-600'
-                      }`}>
+                        }`}>
                         {station.costPerM3} FCFA
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-sm font-medium ${
-                        station.savings >= 0 ? 'text-[#20AF24]' : 'text-red-600'
-                      }`}>
+                      <span className={`text-sm font-medium ${station.savings >= 0 ? 'text-[#20AF24]' : 'text-red-600'
+                        }`}>
                         {station.savings >= 0 ? '+' : ''}{station.savings.toLocaleString()} FCFA
                       </span>
                     </td>
                     <td className="px-4 py-3">{getStatusBadge(station.status)}</td>
                     <td className="px-4 py-3">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         className={station.status === 'critical' ? 'border-red-300 text-red-600' : ''}
                       >
@@ -326,14 +336,14 @@ export function RegionalDashboard() {
             <h2 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
               <ArrowRightLeft className="w-5 h-5" /> Répartition charge optimale
             </h2>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowSimulation(!showSimulation)}
             >
               <Play className="w-4 h-4 mr-2" /> Simuler scénario
             </Button>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-600 mb-4">Distribution actuelle de la production</p>
@@ -359,7 +369,7 @@ export function RegionalDashboard() {
                 </ResponsiveContainer>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-blue-50 rounded-lg p-4">
                 <h3 className="font-semibold text-[#0066CC] mb-2">💡 Recommandation IA</h3>
@@ -367,11 +377,11 @@ export function RegionalDashboard() {
                   <strong>Transférer 15% production Paspanga → Ziga</strong>
                 </p>
                 <p className="text-sm text-gray-600">
-                  Ziga a un meilleur rendement énergétique (40 vs 58 FCFA/m³). 
+                  Ziga a un meilleur rendement énergétique (40 vs 58 FCFA/m³).
                   Cette reallocation permettrait d'optimiser la consommation globale.
                 </p>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-green-50 rounded-lg p-3">
                   <p className="text-sm text-gray-600">Impact économique</p>
@@ -382,7 +392,7 @@ export function RegionalDashboard() {
                   <p className="text-xl font-bold text-[#0066CC]">-12 kg/jour</p>
                 </div>
               </div>
-              
+
               {showSimulation && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 animate-fade-in">
                   <p className="text-sm font-medium text-yellow-800">Simulation en cours...</p>
@@ -403,7 +413,7 @@ export function RegionalDashboard() {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
                 <YAxis dataKey="name" type="category" width={70} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [
                     name === 'efficiency' ? `${value}%` : `${value} FCFA/m³`,
                     name === 'efficiency' ? 'Efficacité' : 'Coût/m³'
