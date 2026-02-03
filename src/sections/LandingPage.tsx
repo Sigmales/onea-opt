@@ -13,7 +13,7 @@ import {
   FileText,
   Play
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },

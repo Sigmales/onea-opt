@@ -8,10 +8,10 @@ import {
   Play,
   AlertCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '../components/ui/button';
+import { Slider } from '../components/ui/slider';
+import { Badge } from '../components/ui/badge';
+import { Progress } from '../components/ui/progress';
 import {
   XAxis,
   YAxis,
@@ -599,4 +599,4 @@ export function OptimisationModule() {
   );
 }
 
-import { Label } from '@/components/ui/label';
+import { Label } from '../components/ui/label';

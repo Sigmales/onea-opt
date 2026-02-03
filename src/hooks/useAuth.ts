@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { User, UserRole } from '@/types';
+import type { User, UserRole } from '../types';
 
 const STORAGE_KEY = 'onea_opt_user';
 

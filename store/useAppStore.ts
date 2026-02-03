@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, UserRole } from '@/types';
+import type { User, UserRole } from '../src/types';
 import {
   initDB,
   addRecommendation,
@@ -21,7 +21,7 @@ import {
   incrementRetryCount,
   checkStorageQuota,
   exportAllData
-} from '@/lib/db';
+} from '../src/lib/db';
 
 // Recommendation type
 interface Recommendation {
