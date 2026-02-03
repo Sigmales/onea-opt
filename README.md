@@ -36,7 +36,7 @@ Réduire de **13.5%** les coûts énergétiques des stations ONEA grâce à :
 
 ```bash
 # Cloner le repository
-git clone https://github.com/onea-opt/onea-opt.git
+git clone https://github.com/Sigmales/onea-opt.git
 cd onea-opt
 
 # Installer les dépendances

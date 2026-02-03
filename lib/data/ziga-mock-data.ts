@@ -1,9 +1,9 @@
 // Station Ziga Realistic Mock Data
 // Based on actual ONEA operational parameters
 
-import { detectAnomalies, PumpDataPoint } from '../algorithms/isolation-forest';
+import { detectAnomalies, type PumpDataPoint } from '../algorithms/isolation-forest';
 import { predictDemand } from '../algorithms/demand-predictor';
-import { optimizePumpSchedule, PumpScheduleParams } from '../algorithms/nsga2';
+import { optimizePumpSchedule, type PumpScheduleParams } from '../algorithms/nsga2';
 
 // Station configuration
 export const ZIGA_STATION = {

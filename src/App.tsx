@@ -6,6 +6,8 @@ import { AnomaliesModule } from './sections/AnomaliesModule';
 import { RegionalDashboard } from './sections/RegionalDashboard';
 import { DGDashboard } from './sections/DGDashboard';
 import { LandingPage } from './sections/LandingPage';
+import { DocumentationPage } from './sections/DocumentationPage';
+import { ConditionsExploitationPage } from './sections/ConditionsExploitationPage';
 import { useAuth } from './hooks/useAuth';
 import type { UserRole } from './types';
 
@@ -164,6 +166,17 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // Simple routing based on URL path for static pages
+  const path = window.location.pathname;
+
+  if (path === '/documentation') {
+    return <DocumentationPage />;
+  }
+
+  if (path === '/conditions-exploitation') {
+    return <ConditionsExploitationPage />;
   }
 
   return <AppContent />;

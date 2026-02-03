@@ -36,37 +36,54 @@ interface Individual {
   cosPhi: number;
 }
 
-// NSGA-II Parameters
+// NSGA-II Parameters (default values, overridable via function options)
 const POPULATION_SIZE = 50;
 const GENERATIONS = 20;
 const CROSSOVER_RATE = 0.9;
 const MUTATION_RATE = 0.1;
 const ELITE_COUNT = 5;
 
+export interface Nsga2Options {
+  populationSize?: number;
+  generations?: number;
+  crossoverRate?: number;
+  mutationRate?: number;
+  eliteCount?: number;
+}
+
 /**
  * Main optimization function - NSGA-II simplified
  */
-export function optimizePumpSchedule(params: PumpScheduleParams): OptimizedSchedule {
-  const { demand, tariffs, reservoirLevel, pumps, constraints } = params;
+export function optimizePumpSchedule(
+  params: PumpScheduleParams,
+  options?: Nsga2Options
+): OptimizedSchedule {
+  const { constraints } = params;
+
+  const populationSize = options?.populationSize ?? POPULATION_SIZE;
+  const generations = options?.generations ?? GENERATIONS;
+  const crossoverRate = options?.crossoverRate ?? CROSSOVER_RATE;
+  const mutationRate = options?.mutationRate ?? MUTATION_RATE;
+  const eliteCount = options?.eliteCount ?? ELITE_COUNT;
   
   // Generate initial population
-  let population = initializePopulation(POPULATION_SIZE, constraints.maxActivePumps);
+  let population = initializePopulation(populationSize, constraints.maxActivePumps);
   
   // Evaluate initial population
   population = population.map(ind => evaluateIndividual(ind, params));
   
   // Evolution loop
-  for (let gen = 0; gen < GENERATIONS; gen++) {
+  for (let gen = 0; gen < generations; gen++) {
     // Create offspring through crossover and mutation
     const offspring: Individual[] = [];
     
-    while (offspring.length < POPULATION_SIZE) {
+    while (offspring.length < populationSize) {
       // Tournament selection
       const parent1 = tournamentSelection(population);
       const parent2 = tournamentSelection(population);
       
       // Crossover
-      if (Math.random() < CROSSOVER_RATE) {
+      if (Math.random() < crossoverRate) {
         const [child1, child2] = crossover(parent1, parent2);
         offspring.push(child1, child2);
       } else {
@@ -75,8 +92,8 @@ export function optimizePumpSchedule(params: PumpScheduleParams): OptimizedSched
     }
     
     // Mutation
-    for (let i = ELITE_COUNT; i < offspring.length; i++) {
-      if (Math.random() < MUTATION_RATE) {
+    for (let i = eliteCount; i < offspring.length; i++) {
+      if (Math.random() < mutationRate) {
         offspring[i] = mutate(offspring[i], constraints.maxActivePumps);
       }
     }
@@ -88,7 +105,7 @@ export function optimizePumpSchedule(params: PumpScheduleParams): OptimizedSched
     const combined = [...population, ...evaluatedOffspring];
     combined.sort((a, b) => a.fitness - b.fitness);
     
-    population = combined.slice(0, POPULATION_SIZE);
+    population = combined.slice(0, populationSize);
   }
   
   // Return best solution

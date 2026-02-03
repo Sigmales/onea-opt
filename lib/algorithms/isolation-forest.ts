@@ -192,7 +192,8 @@ function getPathLength(point: PumpDataPoint, tree: any, currentLength: number): 
     return currentLength + calculateExpectedPath(tree.size);
   }
   
-  const featureValue = point[tree.splitFeature];
+  const featureKey = tree.splitFeature as keyof PumpDataPoint;
+  const featureValue = point[featureKey] as number;
   
   if (featureValue < tree.splitValue) {
     return getPathLength(point, tree.left, currentLength + 1);

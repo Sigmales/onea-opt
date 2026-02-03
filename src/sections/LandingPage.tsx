@@ -127,6 +127,9 @@ export function LandingPage({ onStartDemo }: LandingPageProps) {
                 variant="outline"
                 size="lg"
                 className="h-14 px-8 border-2 border-white text-white hover:bg-white/10 text-lg font-semibold rounded-xl"
+                onClick={() => {
+                  window.location.href = '/documentation';
+                }}
               >
                 <FileText className="w-5 h-5 mr-2" /> Documentation
               </Button>
@@ -425,7 +428,12 @@ export function LandingPage({ onStartDemo }: LandingPageProps) {
             <div className="flex items-center gap-6 text-sm text-gray-400">
               <a href="#" className="hover:text-white transition-colors">Mentions légales</a>
               <a href="#" className="hover:text-white transition-colors">Contact</a>
-              <a href="#" className="hover:text-white transition-colors flex items-center gap-1">
+              <a
+                href="https://github.com/Sigmales/onea-opt"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white transition-colors flex items-center gap-1"
+              >
                 <Github className="w-4 h-4" /> GitHub
               </a>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Download,
   ChevronDown,
@@ -28,6 +28,8 @@ import {
   Line,
   Legend
 } from 'recharts';
+import { ZIGA_STATION, generateDemandPattern, generateTariffSchedule } from '../../lib/data/ziga-mock-data';
+import { optimizePumpSchedule, generateParetoFront, type PumpScheduleParams } from '../../lib/algorithms/nsga2';
 
 // Mission TDR Coverage:
 // Mission 2: Modélisation demande (via prédictions intégrées)
@@ -35,31 +37,6 @@ import {
 // Mission 6: Automatisation décisions
 // Mission 8: Réduction pénalités Cos φ
 // Mission 11: Prévision énergétique (courbes)
-
-const paretoData = Array.from({ length: 50 }, (_, i) => ({
-  cost: 250000 + Math.random() * 60000,
-  stability: 5 + Math.random() * 15,
-  size: 20 + Math.random() * 30,
-  isBest: i === 25
-}));
-
-const costBreakdown = [
-  { name: 'Heures pleines', value: 179900, color: '#0066CC' },
-  { name: 'Heures creuses', value: 64300, color: '#20AF24' },
-  { name: 'Prime fixe', value: 12800, color: '#94A3B8' }
-];
-
-const sensitivityData = [
-  { variation: -20, actuel: 238000, optimise: 206000 },
-  { variation: -15, actuel: 252000, optimise: 218000 },
-  { variation: -10, actuel: 267000, optimise: 231000 },
-  { variation: -5, actuel: 282000, optimise: 244000 },
-  { variation: 0, actuel: 297000, optimise: 257000 },
-  { variation: 5, actuel: 312000, optimise: 270000 },
-  { variation: 10, actuel: 327000, optimise: 283000 },
-  { variation: 15, actuel: 342000, optimise: 296000 },
-  { variation: 20, actuel: 357000, optimise: 309000 },
-];
 
 const scheduleHeatmap = [
   { hour: 0, P1: 1, P2: 1, P3: 1, offPeak: true },
@@ -88,11 +65,34 @@ const scheduleHeatmap = [
   { hour: 23, P1: 1, P2: 1, P3: 1, offPeak: true },
 ];
 
+const costBreakdown = [
+  { name: 'Heures pleines', value: 179900, color: '#0066CC' },
+  { name: 'Heures creuses', value: 64300, color: '#20AF24' },
+  { name: 'Prime fixe', value: 12800, color: '#94A3B8' }
+];
+
+const sensitivityData = [
+  { variation: -20, actuel: 238000, optimise: 206000 },
+  { variation: -15, actuel: 252000, optimise: 218000 },
+  { variation: -10, actuel: 267000, optimise: 231000 },
+  { variation: -5, actuel: 282000, optimise: 244000 },
+  { variation: 0, actuel: 297000, optimise: 257000 },
+  { variation: 5, actuel: 312000, optimise: 270000 },
+  { variation: 10, actuel: 327000, optimise: 283000 },
+  { variation: 15, actuel: 342000, optimise: 296000 },
+  { variation: 20, actuel: 357000, optimise: 309000 },
+];
+
 export function OptimisationModule() {
   const [showSettings, setShowSettings] = useState(false);
   const [offPeakPercent, setOffPeakPercent] = useState(30);
   const [reservoirTarget, setReservoirTarget] = useState(75);
   const [isCalculating, setIsCalculating] = useState(false);
+
+  const [baseCost, setBaseCost] = useState<number | null>(null);
+  const [optimizedCost, setOptimizedCost] = useState<number | null>(null);
+  const [optimizedCosPhi, setOptimizedCosPhi] = useState<number | null>(null);
+  const [paretoPoints, setParetoPoints] = useState<{ cost: number; stability: number }[]>([]);
 
   const [algorithmParams, setAlgorithmParams] = useState({
     population: 50,
@@ -101,10 +101,58 @@ export function OptimisationModule() {
     mutation: 0.1
   });
 
+  const runOptimization = () => {
+    const today = new Date();
+    const demand = generateDemandPattern(today);
+    const tariffs = generateTariffSchedule();
+
+    const params: PumpScheduleParams = {
+      demand,
+      tariffs,
+      reservoirLevel: ZIGA_STATION.reservoir.currentLevel,
+      pumps: ZIGA_STATION.pumps.map(p => ({
+        id: p.id,
+        power: p.power,
+        efficiency: p.efficiency,
+        maxFlow: p.maxFlow
+      })),
+      constraints: {
+        minReservoir: ZIGA_STATION.reservoir.minLevel,
+        maxReservoir: ZIGA_STATION.reservoir.maxLevel,
+        minCosPhi: ZIGA_STATION.electrical.cosPhiMin,
+        maxActivePumps: 3
+      }
+    };
+
+    const result = optimizePumpSchedule(params, {
+      populationSize: algorithmParams.population,
+      generations: algorithmParams.generations,
+      crossoverRate: algorithmParams.crossover,
+      mutationRate: algorithmParams.mutation
+    });
+
+    const uniformCost = result.cost + result.savings;
+
+    setBaseCost(uniformCost);
+    setOptimizedCost(result.cost);
+    setOptimizedCosPhi(result.cosPhi);
+
+    const front = generateParetoFront(params, 40);
+    setParetoPoints(front.map((p) => ({ cost: p.cost, stability: p.stability })));
+  };
+
   const handleRecalculate = () => {
     setIsCalculating(true);
-    setTimeout(() => setIsCalculating(false), 2000);
+    setTimeout(() => {
+      runOptimization();
+      setIsCalculating(false);
+    }, 300); // léger délai pour l'animation
   };
+
+  useEffect(() => {
+    runOptimization();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getPumpColor = (value: number, offPeak: boolean) => {
     if (value === 0) return '#E2E8F0';
@@ -142,7 +190,9 @@ export function OptimisationModule() {
             <h3 className="text-lg font-semibold text-gray-600 mb-4">Scénario Actuel</h3>
             <div className="space-y-3">
               <div>
-                <p className="text-3xl font-bold text-[#1E293B]">297 000 FCFA</p>
+                <p className="text-3xl font-bold text-[#1E293B]">
+                  {(baseCost ?? 297000).toLocaleString()} FCFA
+                </p>
                 <p className="text-sm text-gray-500">/jour</p>
               </div>
               <div className="pt-3 border-t border-gray-100 space-y-2">
@@ -172,12 +222,21 @@ export function OptimisationModule() {
             <h3 className="text-lg font-semibold text-[#20AF24] mb-4">IA Optimisé</h3>
             <div className="space-y-3">
               <div>
-                <p className="text-3xl font-bold text-[#20AF24]">257 000 FCFA</p>
+                <p className="text-3xl font-bold text-[#20AF24]">
+                  {(optimizedCost ?? 257000).toLocaleString()} FCFA
+                </p>
                 <p className="text-sm text-gray-500">/jour</p>
               </div>
-              <div className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
-                <ChevronDown className="w-4 h-4 rotate-180" /> 13.5%
-              </div>
+              {baseCost && optimizedCost ? (
+                <div className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                  <ChevronDown className="w-4 h-4 rotate-180" />
+                  {`${Math.round(((baseCost - optimizedCost) / baseCost) * 1000) / 10}%`}
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                  <ChevronDown className="w-4 h-4 rotate-180" /> 13.5%
+                </div>
+              )}
               <div className="pt-3 border-t border-gray-100 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Pompage</span>
@@ -189,7 +248,9 @@ export function OptimisationModule() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Cos φ</span>
-                  <span className="font-medium text-green-600">0.94</span>
+                  <span className="font-medium text-green-600">
+                    {(optimizedCosPhi ?? 0.94).toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Pénalités</span>
@@ -234,7 +295,11 @@ export function OptimisationModule() {
               </div>
               <div className="pt-3 border-t border-gray-100">
                 <p className="text-2xl font-bold text-[#1E293B]">
-                  {Math.round(257000 + (offPeakPercent - 30) * 800 + (reservoirTarget - 75) * 200).toLocaleString()} FCFA
+                  {Math.round(
+                    (optimizedCost ?? 257000) +
+                    (offPeakPercent - 30) * 800 +
+                    (reservoirTarget - 75) * 200
+                  ).toLocaleString()} FCFA
                 </p>
               </div>
               <Button className="w-full" variant="outline">Appliquer ce scénario</Button>
@@ -281,9 +346,24 @@ export function OptimisationModule() {
                     return null;
                   }}
                 />
-                <Scatter data={paretoData} fill="#94A3B8">
-                  {paretoData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.isBest ? '#20AF24' : '#94A3B8'} />
+                <Scatter
+                  data={
+                    paretoPoints.length
+                      ? paretoPoints.map((p, i) => ({
+                          cost: p.cost,
+                          stability: p.stability,
+                          size: 40 + (i === 0 ? 40 : 0),
+                          isBest: i === 0
+                        }))
+                      : []
+                  }
+                  fill="#94A3B8"
+                >
+                  {paretoPoints.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={index === 0 ? '#20AF24' : '#94A3B8'}
+                    />
                   ))}
                 </Scatter>
               </ScatterChart>
