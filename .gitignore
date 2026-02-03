@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+*.local
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Documents soumission (ne pas push)
+CONFORMITE_TDR.md
+TESTS_OFFLINE.md
+CONDITIONS_EXPLOITATION.txt

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#009CD1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#grad)"/>
+  <g transform="translate(48, 40)">
+    <!-- Water drop -->
+    <path d="M48 0C48 0 12 56 12 80C12 99.88 28.12 116 48 116C67.88 116 84 99.88 84 80C84 56 48 0 48 0Z" 
+          fill="white" opacity="0.9"/>
+    <!-- Lightning bolt -->
+    <path d="M52 28L36 60H50L44 88L68 52H52L58 28Z" 
+          fill="#0066CC"/>
+  </g>
+</svg>

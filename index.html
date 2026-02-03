@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0066CC" />
+    <meta name="background-color" content="#F8FAFC" />
+    <meta name="description" content="ONEA-OPT - Solution d'optimisation énergétique intelligente pour stations d'eau au Burkina Faso" />
+    <meta name="keywords" content="ONEA, optimisation, énergie, eau, Burkina Faso, IA" />
+    <meta name="author" content="ONEA-OPT Team" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+    
+    <!-- Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ONEA-OPT" />
+    
+    <!-- Microsoft -->
+    <meta name="msapplication-TileColor" content="#0066CC" />
+    <meta name="msapplication-TileImage" content="/icon-192.png" />
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>ONEA-OPT - Optimisation Énergétique</title>
+    
+    <style>
+      /* Critical CSS for fast first paint */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #F8FAFC;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      .loading-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0066CC 0%, #009CD1 100%);
+        z-index: 9999;
+      }
+      .loading-screen.hidden {
+        display: none;
+      }
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading screen shown before React loads -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+              scope: '/'
+            });
+            console.log('[SW] Registered:', registration.scope);
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New version available
+                    if (confirm('Nouvelle version disponible. Recharger ?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              }
+            });
+          } catch (error) {
+            console.error('[SW] Registration failed:', error);
+          }
+        });
+      }
+      
+      // Hide loading screen when app is ready
+      window.addEventListener('DOMContentLoaded', () => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+          }, 500);
+        }
+      });
+    </script>
+  </body>
+</html>

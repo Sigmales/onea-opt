@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ONEA-OPT - Mode Hors Ligne</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0066CC 0%, #009CD1 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 32px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: #FEF3C7;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+    
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      color: #F59E0B;
+    }
+    
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1E293B;
+      margin-bottom: 12px;
+    }
+    
+    p {
+      font-size: 16px;
+      color: #64748B;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F1F5F9;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: #F59E0B;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #475569;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px 24px;
+      background: #0066CC;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: #0052A3;
+    }
+    
+    .btn-secondary {
+      background: #F1F5F9;
+      color: #475569;
+      margin-top: 12px;
+    }
+    
+    .btn-secondary:hover {
+      background: #E2E8F0;
+    }
+    
+    .features {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid #E2E8F0;
+    }
+    
+    .features h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #475569;
+    }
+    
+    .feature-item svg {
+      width: 20px;
+      height: 20px;
+      color: #20AF24;
+      flex-shrink: 0;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+      </svg>
+    </div>
+    
+    <h1>Mode Hors Ligne</h1>
+    
+    <p>
+      Vous êtes actuellement déconnecté. ONEA-OPT fonctionne en mode hors ligne avec les données en cache.
+    </p>
+    
+    <div class="status">
+      <div class="status-dot"></div>
+      <span class="status-text">Synchronisation automatique</span>
+    </div>
+    
+    <button class="btn" onclick="window.location.reload()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+      </svg>
+      Réessayer la connexion
+    </button>
+    
+    <button class="btn btn-secondary" onclick="window.location.href='/'">
+      Continuer en mode hors ligne
+    </button>
+    
+    <div class="features">
+      <h3>Fonctionnalités disponibles hors ligne</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Visualisation des données en cache</span>
+        </div>
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Validation des recommandations IA</span>
+        </div>
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Signalement des anomalies</span>
+        </div>
+        <div class="feature-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Synchronisation automatique au retour du réseau</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Check online status periodically
+    setInterval(() => {
+      if (navigator.onLine) {
+        window.location.reload();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
