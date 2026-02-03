@@ -70,6 +70,47 @@ export function DocumentationPage() {
         </section>
 
         <section>
+          <h2 className="text-xl font-semibold mb-2">Algorithmes IA & Optimisation</h2>
+          <div className="space-y-4">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="font-bold text-[#0066CC] mb-2">1. Prédiction Demande (LSTM Simplifié)</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Prédiction de la demande en eau 24h à l'avance pour la station Ziga.
+              </p>
+              <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
+                <li><strong>Missions TDR:</strong> 2, 11</li>
+                <li><strong>Impact:</strong> Réduction 10-15% des coûts énergétiques</li>
+                <li><strong>Tech:</strong> Analyse patterns temporels & facteurs saisonniers</li>
+              </ul>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="font-bold text-[#0066CC] mb-2">2. Détection Anomalies (Isolation Forest)</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Monitoring non-supervisé des pompes pour détecter fuites et usures.
+              </p>
+              <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
+                <li><strong>Missions TDR:</strong> 7, 12</li>
+                <li><strong>Alertes:</strong> Surconsommation, Fuites, Usure pompe</li>
+                <li><strong>Features:</strong> kWh/m³, débit, niveau réservoir, vibration</li>
+              </ul>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="font-bold text-[#0066CC] mb-2">3. Optimisation Planning (NSGA-II)</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Optimisation multi-objectifs du planning de pompage.
+              </p>
+              <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
+                <li><strong>Missions TDR:</strong> 2, 3, 4, 5, 6, 8</li>
+                <li><strong>Gain:</strong> ~250 000 FCFA/jour (Station Ziga)</li>
+                <li><strong>Objectifs:</strong> Coût énergie, contraintes réservoir, Cos φ</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section>
           <h2 className="text-xl font-semibold mb-2">Ressources supplémentaires</h2>
           <p className="text-sm text-gray-700 mb-3">
             La documentation détaillée (architecture, algorithmes IA, cas Station Ziga) est disponible sur le dépôt GitHub.
