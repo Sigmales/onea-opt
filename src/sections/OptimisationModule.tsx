@@ -28,8 +28,18 @@ import {
   Line,
   Legend
 } from 'recharts';
-import { ZIGA_STATION, generateDemandPattern, generateTariffSchedule } from '../../lib/data/ziga-mock-data';
-import { optimizePumpSchedule, generateParetoFront, type PumpScheduleParams } from '../../lib/algorithms/nsga2';
+import {
+  ZIGA_STATION,
+  SONABEL_TARIFFS,
+  generateDemandPattern,
+  generateTariffSchedule
+} from '../../lib/data/ziga-mock-data';
+import {
+  optimizePumpSchedule,
+  generateParetoFront,
+  type PumpScheduleParams
+} from '../../lib/algorithms/nsga2';
+import { exportOptimizationReport } from '../../lib/pdf-export';
 
 // Mission TDR Coverage:
 // Mission 2: Modélisation demande (via prédictions intégrées)
@@ -83,6 +93,48 @@ const sensitivityData = [
   { variation: 20, actuel: 357000, optimise: 309000 },
 ];
 
+function computeScheduleCost(
+  schedule: number[],
+  demand: number[],
+  tariffs: number[]
+): { totalCost: number; peakCost: number; offPeakCost: number } {
+  const avgEfficiency =
+    ZIGA_STATION.pumps.reduce((s, p) => s + p.efficiency, 0) / ZIGA_STATION.pumps.length;
+
+  let total = 0;
+  let peakCost = 0;
+  let offPeakCost = 0;
+
+  for (let hour = 0; hour < 24; hour++) {
+    const pumpsActive = schedule[hour];
+    const hourlyDemand = demand[hour];
+    const baseTariff = tariffs[hour];
+
+    const productionCapacity = pumpsActive * ZIGA_STATION.pumps[0].maxFlow;
+    const actualProduction = Math.min(productionCapacity, hourlyDemand * 1.2);
+
+    const energyKWh = actualProduction * avgEfficiency;
+    const hourlyCost = energyKWh * baseTariff;
+
+    total += hourlyCost;
+
+    const isOffPeak = baseTariff === SONABEL_TARIFFS.offPeakPrice;
+    if (isOffPeak) {
+      offPeakCost += hourlyCost;
+    } else {
+      peakCost += hourlyCost;
+    }
+  }
+
+  total += SONABEL_TARIFFS.fixedCharge;
+
+  return {
+    totalCost: Math.round(total),
+    peakCost: Math.round(peakCost),
+    offPeakCost: Math.round(offPeakCost)
+  };
+}
+
 export function OptimisationModule() {
   const [showSettings, setShowSettings] = useState(false);
   const [offPeakPercent, setOffPeakPercent] = useState(30);
@@ -93,6 +145,16 @@ export function OptimisationModule() {
   const [optimizedCost, setOptimizedCost] = useState<number | null>(null);
   const [optimizedCosPhi, setOptimizedCosPhi] = useState<number | null>(null);
   const [paretoPoints, setParetoPoints] = useState<{ cost: number; stability: number }[]>([]);
+
+  const [dynamicCostBreakdown, setDynamicCostBreakdown] = useState<typeof costBreakdown | null>(null);
+  const [dynamicScheduleHeatmap, setDynamicScheduleHeatmap] =
+    useState<typeof scheduleHeatmap | null>(null);
+  const [dynamicSensitivityData, setDynamicSensitivityData] =
+    useState<typeof sensitivityData | null>(null);
+
+  const [demand24h, setDemand24h] = useState<number[]>([]);
+  const [tariffs24h, setTariffs24h] = useState<number[]>([]);
+  const [optimizedPlanning, setOptimizedPlanning] = useState<number[]>([]);
 
   const [algorithmParams, setAlgorithmParams] = useState({
     population: 50,
@@ -131,14 +193,59 @@ export function OptimisationModule() {
       mutationRate: algorithmParams.mutation
     });
 
-    const uniformCost = result.cost + result.savings;
+    const uniformSchedule = Array.from(
+      { length: 24 },
+      () => params.constraints.maxActivePumps
+    );
 
-    setBaseCost(uniformCost);
-    setOptimizedCost(result.cost);
+    const uniform = computeScheduleCost(uniformSchedule, demand, tariffs);
+    const optimized = computeScheduleCost(result.planning, demand, tariffs);
+
+    setBaseCost(uniform.totalCost);
+    setOptimizedCost(optimized.totalCost);
     setOptimizedCosPhi(result.cosPhi);
 
     const front = generateParetoFront(params, 40);
     setParetoPoints(front.map((p) => ({ cost: p.cost, stability: p.stability })));
+
+    // Met à jour les visualisations dérivées
+    setDynamicCostBreakdown([
+      { name: 'Heures pleines', value: optimized.peakCost, color: '#0066CC' },
+      { name: 'Heures creuses', value: optimized.offPeakCost, color: '#20AF24' },
+      { name: 'Prime fixe', value: SONABEL_TARIFFS.fixedCharge, color: '#94A3B8' }
+    ]);
+
+    const optimizedHeatmap = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const pumpsActive = result.planning[hour];
+      const isOffPeak = tariffs[hour] === SONABEL_TARIFFS.offPeakPrice;
+      optimizedHeatmap.push({
+        hour,
+        P1: pumpsActive >= 1 ? 1 : 0,
+        P2: pumpsActive >= 2 ? 1 : 0,
+        P3: pumpsActive >= 3 ? 1 : 0,
+        offPeak: isOffPeak
+      });
+    }
+    setDynamicScheduleHeatmap(optimizedHeatmap);
+
+    const variations = [-20, -15, -10, -5, 0, 5, 10, 15, 20];
+    const sensitivity = variations.map((variation) => {
+      const factor = 1 + variation / 100;
+      const scaledTariffs = tariffs.map((t) => t * factor);
+      const uniformVar = computeScheduleCost(uniformSchedule, demand, scaledTariffs);
+      const optimizedVar = computeScheduleCost(result.planning, demand, scaledTariffs);
+      return {
+        variation,
+        actuel: uniformVar.totalCost,
+        optimise: optimizedVar.totalCost
+      };
+    });
+    setDynamicSensitivityData(sensitivity);
+
+    setDemand24h(demand);
+    setTariffs24h(tariffs);
+    setOptimizedPlanning(result.planning);
   };
 
   const handleRecalculate = () => {
@@ -153,6 +260,36 @@ export function OptimisationModule() {
     runOptimization();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleExportReport = async () => {
+    if (!baseCost || !optimizedCost || !optimizedPlanning.length) {
+      // On évite de générer un PDF vide
+      alert("Veuillez d'abord laisser l'optimisation se calculer.");
+      return;
+    }
+
+    const savings = baseCost - optimizedCost;
+    const savingsPercent = Math.round((savings / baseCost) * 1000) / 10;
+
+    await exportOptimizationReport({
+      stationName: ZIGA_STATION.name,
+      date: new Date().toISOString().split('T')[0],
+      currentCost: baseCost,
+      optimizedCost,
+      savings,
+      savingsPercent,
+      planning24h: optimizedPlanning,
+      demand24h: demand24h.length ? demand24h : Array(24).fill(0),
+      tariffs24h: tariffs24h.length ? tariffs24h : Array(24).fill(SONABEL_TARIFFS.peakPrice),
+      cosPhi: optimizedCosPhi ?? ZIGA_STATION.electrical.cosPhi,
+      penaltyAvoided:
+        (optimizedCosPhi ?? ZIGA_STATION.electrical.cosPhi) >= ZIGA_STATION.electrical.cosPhiMin
+          ? 8900
+          : 0,
+      co2Saved: 142,
+      paretoFront: paretoPoints
+    });
+  };
 
   const getPumpColor = (value: number, offPeak: boolean) => {
     if (value === 0) return '#E2E8F0';
@@ -174,7 +311,7 @@ export function OptimisationModule() {
               <h1 className="text-2xl font-bold text-[#1E293B]">Optimisation Multi-Objectifs NSGA-II</h1>
               <p className="text-sm text-gray-500">Station Ziga - Cycle 03/02/2026</p>
             </div>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={handleExportReport}>
               <Download className="w-4 h-4" /> Exporter rapport PDF
             </Button>
           </div>
@@ -380,7 +517,7 @@ export function OptimisationModule() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={costBreakdown}
+                    data={dynamicCostBreakdown ?? costBreakdown}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -388,7 +525,7 @@ export function OptimisationModule() {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {costBreakdown.map((entry, index) => (
+                    {(dynamicCostBreakdown ?? costBreakdown).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -398,7 +535,9 @@ export function OptimisationModule() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-[#1E293B]">257k</p>
+                  <p className="text-2xl font-bold text-[#1E293B]">
+                    {optimizedCost ? `${Math.round(optimizedCost / 1000)}k` : '257k'}
+                  </p>
                   <p className="text-xs text-gray-500">FCFA</p>
                 </div>
               </div>
@@ -413,7 +552,7 @@ export function OptimisationModule() {
                 <div key={pump} className="flex items-center gap-2">
                   <span className="w-8 text-sm font-medium text-gray-600">{pump}</span>
                   <div className="flex-1 flex gap-0.5">
-                    {scheduleHeatmap.map((h, i) => (
+                    {(dynamicScheduleHeatmap ?? scheduleHeatmap).map((h, i) => (
                       <div
                         key={i}
                         className="flex-1 h-8 rounded-sm cursor-pointer hover:opacity-80 transition-opacity"
@@ -450,7 +589,7 @@ export function OptimisationModule() {
           <h2 className="text-lg font-bold text-[#1E293B] mb-4">Sensibilité aux variations tarifaires</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sensitivityData}>
+              <LineChart data={dynamicSensitivityData ?? sensitivityData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="variation" 
