@@ -301,10 +301,9 @@ Ce projet est sous licence MIT. Voir [CONDITIONS_EXPLOITATION.txt](CONDITIONS_EX
 **ONEA Burkina Faso**
 - Direction Générale
 - Ouagadougou, Burkina Faso
-- Email : dg@onea.bf
 
 **ONEA-OPT Team**
-- Email : onea-opt@hackathon2026.onea.bf
+- Email : yantoubri@gmail.com
 
 ---
 
